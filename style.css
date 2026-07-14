@@ -31,7 +31,9 @@ body {
     padding: 30px 0; 
     box-sizing: border-box;
 }
-.header { z-index: 10; margin-top: -20px; }
+.header { position: relative; /* Kích hoạt lớp nổi z-index */
+    z-index: 100; /* Tăng hẳn lên 100 để chắc chắn nằm trên mây */
+    margin-top: -20px; }
 .subtitle { 
     color: var(--red); font-size: 1.5rem; letter-spacing: 4px; margin: 0;
     font-family: var(--font-title); font-weight: 700;
@@ -145,26 +147,67 @@ body {
 }
 .answers-grid button:hover { background: var(--gold); color: var(--red); transform: scale(1.05); }
 
-/* Hoạt ảnh trang trí SVG */
-@keyframes floatCloud {
-    0% { transform: translateX(0); }
-    50% { transform: translateX(15px); }
-    100% { transform: translateX(0); }
-}
-@keyframes breatheLotus {
-    0% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.02) rotate(1deg); }
-    100% { transform: scale(1) rotate(0deg); }
-}
-.cloud-left, .cloud-right { animation: floatCloud 6s ease-in-out infinite; }
-.lotus-left { animation: breatheLotus 4s ease-in-out infinite; transform-origin: bottom left; }
-.lotus-right { animation: breatheLotus 4s ease-in-out infinite reverse; transform-origin: bottom right; }
-
+/* =========================================
+   HOẠT ẢNH TRANG TRÍ SVG (ĐÃ CĂN CHỈNH ĐỐI XỨNG)
+   ========================================= */
 .deco { position: absolute; z-index: -1; }
-.lotus-left { bottom: -80px; left: -50px; width: 650px; } /* Tăng lên 650px */
-.lotus-right { bottom: -80px; right: -50px; width: 650px; transform: scaleX(-1); }
-.cloud-left { top: 10px; left: 20px; width: 500px; } /* Tăng lên 500px */
-.cloud-right { top: 10px; right: 20px; width: 500px; transform: scaleX(-1); } /* Thêm lật ngược mây cho đối xứng */
+
+/* --- 1. MÂY (CLOUDS) --- */
+/* Mây trái: Lật ngang (scale -1) */
+@keyframes floatCloudLeft {
+    0% { transform: scale(-1, 1) translateX(0); }
+    50% { transform: scale(-1, 1) translateX(15px); }
+    100% { transform: scale(-1, 1) translateX(0); }
+}
+/* Mây phải: Giữ nguyên (scale 1) */
+@keyframes floatCloudRight {
+    0% { transform: scale(1, 1) translateX(0); }
+    50% { transform: scale(1, 1) translateX(15px); }
+    100% { transform: scale(1, 1) translateX(0); }
+}
+
+.cloud-left { 
+    top: -50px; /* Đẩy mây xích lên cao một chút để ôm trọn tiêu đề */
+    left: -60px; /* Cho mây tràn nhẹ ra khỏi viền trái */
+    width: 850px; /* Phóng to mây từ 500px lên 850px */
+    transform-origin: center center; 
+    animation: floatCloudLeft 6s ease-in-out infinite; 
+    opacity: 0.85; /* Giảm độ đậm một xíu để không làm chìm chữ */
+}
+
+.cloud-right { 
+    top: -50px; 
+    right: -60px; 
+    width: 850px; 
+    transform-origin: center center;
+    animation: floatCloudRight 6s ease-in-out infinite; 
+    opacity: 0.85;
+}
+
+/* --- 2. HOA SEN (LOTUS) --- */
+/* Sen trái: Lật ngang và góc quay ngược chiều */
+@keyframes breatheLotusLeft {
+    0% { transform: scale(-1, 1) rotate(0deg); }
+    50% { transform: scale(-1.02, 1.02) rotate(-1deg); } 
+    100% { transform: scale(-1, 1) rotate(0deg); }
+}
+/* Sen phải: Giữ nguyên */
+@keyframes breatheLotusRight {
+    0% { transform: scale(1, 1) rotate(0deg); }
+    50% { transform: scale(1.02, 1.02) rotate(1deg); }
+    100% { transform: scale(1, 1) rotate(0deg); }
+}
+
+.lotus-left { 
+    bottom: -80px; left: -50px; width: 650px; 
+    transform-origin: center bottom; /* Tâm nhịp thở ở chính giữa gốc, cố định ảnh */
+    animation: breatheLotusLeft 4s ease-in-out infinite; 
+}
+.lotus-right { 
+    bottom: -80px; right: -50px; width: 650px; 
+    transform-origin: center bottom; 
+    animation: breatheLotusRight 4s ease-in-out infinite; 
+}
 /* =========================================
    MÀN HÌNH NHẬP THÔNG TIN (START SCREEN) 
    ========================================= */
