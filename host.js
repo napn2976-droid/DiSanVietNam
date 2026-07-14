@@ -14,16 +14,12 @@ onValue(ref(db, 'players'), (snapshot) => {
     const data = snapshot.val() || {};
     let players = Object.values(data);
     
-    // Cập nhật số lượng người chơi
     document.getElementById("count-display").innerText = players.length;
-    
-    // Sắp xếp: Ưu tiên Điểm cao -> Ưu tiên Thời gian thấp
     players.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return a.time - b.time;
     });
     
-    // Hiển thị danh sách đầy đủ (Tên, Điểm, Thời gian)
     const listEl = document.getElementById("live-leaderboard");
     listEl.innerHTML = players.map((p, i) => {
         let trophy = i === 0 ? "🥇" : (i === 1 ? "🥈" : (i === 2 ? "🥉" : ""));
@@ -36,12 +32,17 @@ onValue(ref(db, 'players'), (snapshot) => {
     }).join("");
 });
 
-// Nút điều khiển Bắt đầu
-window.startGlobalGame = () => update(ref(db), { gameStarted: true });
+// THÊM ALERT ĐỂ BIẾT NÚT ĐÃ ĐƯỢC ẤN THÀNH CÔNG
+window.startGlobalGame = () => {
+    update(ref(db), { gameStarted: true })
+        .then(() => alert("✅ Đã phát lệnh BẮT ĐẦU! Màn hình của tất cả người chơi đang được mở khóa."))
+        .catch((error) => alert("❌ Lỗi mạng: " + error));
+};
 
-// Nút Reset
 window.resetGameData = () => {
-    if (confirm("CẢNH BÁO: Xóa sạch toàn bộ dữ liệu người chơi?")) {
-        set(ref(db), { players: null, gameStarted: false });
+    if (confirm("CẢNH BÁO: Xóa sạch toàn bộ dữ liệu người chơi và MỞ LẠI PHÒNG?")) {
+        set(ref(db), { players: null, gameStarted: false })
+            .then(() => alert("✅ Đã làm mới phòng! Người chơi mới có thể tham gia ngay bây giờ."))
+            .catch((error) => alert("❌ Lỗi mạng: " + error));
     }
 };
