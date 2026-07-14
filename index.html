@@ -91,7 +91,14 @@
     <script type="module" src="app.js"></script>
 </body>
 </html>
-<div id="wait-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; color:white; display:flex; justify-content:center; align-items:center; z-index:9999;">
-    <h1>ĐANG CHỜ MÁY CHỦ BẮT ĐẦU...</h1>
-</div>
 <!-- Phần còn lại là giao diện game cũ của bạn -->
+ <!-- Màn hình nhập tên (hiện đầu tiên) -->
+<div id="start-screen">
+    <input type="text" id="player-name-input" placeholder="Nhập tên...">
+    <button onclick="window.startGame()">ĐĂNG KÝ VÀ ĐỢI</button>
+</div>
+
+<!-- Màn hình chờ (ẩn đi lúc đầu) -->
+<div id="wait-screen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; color:white; justify-content:center; align-items:center; z-index:9999;">
+    <h1>ĐÃ ĐĂNG KÝ! CHỜ CHỦ TRÒ CHƠI BẮT ĐẦU...</h1>
+</div>
