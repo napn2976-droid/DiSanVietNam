@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Màn Hình Máy Chủ</title>
+    <!-- Bổ sung link Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Mulish:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body style="justify-content: flex-start; padding-top: 20px;">
+<body style="justify-content: flex-start; padding-top: 20px; font-family: var(--font-body); background-color: var(--bg-cream);">
 
-    <button onclick="window.resetGameData()" style="position: absolute; top: 20px; left: 20px; padding: 10px; background: var(--red); color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 RESET</button>
+    <button onclick="window.resetGameData()" style="position: absolute; top: 20px; left: 20px; padding: 10px 20px; background: var(--red); color: white; border: 2px solid var(--gold); border-radius: 8px; cursor: pointer; font-family: var(--font-body); font-weight: bold;">🔄 LÀM MỚI DỮ LIỆU</button>
     
     <div style="text-align: center; margin-top: 50px;">
-        <h1 style="color: var(--gold);">SỐ LƯỢNG NGƯỜI CHƠI: <span id="count-display" style="color: white;">0</span></h1>
-        <button id="start-btn" onclick="window.startGlobalGame()" style="padding: 20px 40px; font-size: 2rem; background: green; color: white; border: none; border-radius: 10px; cursor: pointer;">▶ BẮT ĐẦU TRÒ CHƠI</button>
+        <h1 style="color: var(--red); font-family: var(--font-title); font-size: 3rem;">SỐ LƯỢNG NGƯỜI CHƠI: <span id="count-display" style="color: #333;">0</span></h1>
+        <button id="start-btn" onclick="window.startGlobalGame()" style="padding: 20px 40px; font-size: 1.5rem; background: #28a745; color: white; border: 3px solid var(--gold); border-radius: 10px; cursor: pointer; font-family: var(--font-body); font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">▶ BẮT ĐẦU TRÒ CHƠI</button>
     </div>
 
-    <ul id="live-leaderboard" style="width: 80%; margin: 20px auto; list-style: none; padding: 0;"></ul>
+    <ul id="live-leaderboard" style="width: 80%; margin: 30px auto; list-style: none; padding: 0; font-family: var(--font-body); font-size: 1.5rem;"></ul>
 
     <script type="module" src="host.js"></script>
 </body>

@@ -2,7 +2,15 @@ import { gameData } from './questions.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-const db = getDatabase(initializeApp({ /* Config của bạn */ }));
+// ĐÃ THÊM LẠI CẤU HÌNH FIREBASE THẬT
+const firebaseConfig = {
+    apiKey: "AIzaSyCi3OtCHi58OcgbAP6vclqJWy-sEGWfYDI",
+    authDomain: "disanvietnam-9e9ab.firebaseapp.com",
+    databaseURL: "https://disanvietnam-9e9ab-default-rtdb.firebaseio.com",
+    projectId: "disanvietnam-9e9ab"
+};
+const db = getDatabase(initializeApp(firebaseConfig));
+
 let player = { id: "p_" + Date.now(), name: "", score: 0, time: 0 };
 
 // 1. Nhập tên xong mới đẩy lên và vào trạng thái chờ
@@ -23,6 +31,6 @@ window.startGame = function() {
 onValue(ref(db, 'gameStarted'), (snapshot) => {
     if (snapshot.val() === true) {
         document.getElementById("wait-screen").style.display = "none";
-        // Bắt đầu vào game...
+        loadLevel(0); // Lệnh này giúp game thực sự bắt đầu
     }
 });
