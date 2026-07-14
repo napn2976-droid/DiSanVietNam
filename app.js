@@ -3,10 +3,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // ==========================================
-// 1. CẤU HÌNH FIREBASE (THAY MÃ CỦA BẠN VÀO ĐÂY)
+// 1. CẤU HÌNH FIREBASE
 // ==========================================
 const firebaseConfig = {
-    apiKey: "AIzaSyCi3OtCHi58OcgbAP6vclqJWy-sEGWfYDI", // Đã khôi phục lại từ bản cũ của bạn
+    apiKey: "AIzaSyCi3OtCHi58OcgbAP6vclqJWy-sEGWfYDI",
     authDomain: "disanvietnam-9e9ab.firebaseapp.com",
     databaseURL: "https://disanvietnam-9e9ab-default-rtdb.firebaseio.com",
     projectId: "disanvietnam-9e9ab"
@@ -25,15 +25,36 @@ let currentLevel = 0;
 let questionStartTime = 0;
 let attemptedPieces = []; 
 let countdownInterval; 
-
-// Biến lưu trữ mảng câu hỏi đã được xáo trộn cho riêng người chơi này
 let currentLevelQuestions = [];
 
 // ==========================================
-// THUẬT TOÁN ĐẢO NGẪU NHIÊN (SHUFFLE)
+// HÀM TẠO THÔNG BÁO NỔI (MỚI)
+// ==========================================
+function showNotification(msg, type) {
+    const toast = document.createElement("div");
+    toast.className = `toast-notification toast-${type}`;
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    
+    // Hiện hiệu ứng trượt xuống
+    setTimeout(() => { 
+        toast.style.opacity = "1"; 
+        toast.style.top = "30px"; 
+    }, 10);
+    
+    // Tự động tắt sau 2 giây (Không cần người chơi bấm OK)
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.top = "-50px";
+        setTimeout(() => toast.remove(), 400); // Xóa thẻ rác
+    }, 2000);
+}
+
+// ==========================================
+// THUẬT TOÁN ĐẢO NGẪU NHIÊN
 // ==========================================
 function shuffleArray(array) {
-    let newArray = [...array]; // Tạo bản sao để không làm hỏng dữ liệu gốc
+    let newArray = [...array]; 
     for (let i = newArray.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
@@ -42,11 +63,14 @@ function shuffleArray(array) {
 }
 
 // ==========================================
-// 3. LOGIC MÀN HÌNH CHỜ (START GAME)
+// LOGIC MÀN HÌNH CHỜ (START GAME)
 // ==========================================
 window.startGame = function() {
     const nameInput = document.getElementById("player-name-input").value.trim();
-    if (!nameInput) return alert("Vui lòng nhập tên của bạn để bắt đầu!");
+    if (!nameInput) {
+        showNotification("⚠️ Vui lòng nhập tên của bạn để bắt đầu!", "warning");
+        return;
+    }
 
     player.name = nameInput;
     document.getElementById("player-name").innerText = player.name;
@@ -57,7 +81,7 @@ window.startGame = function() {
 };
 
 // ==========================================
-// 4. LOGIC VẬN HÀNH GAME
+// LOGIC VẬN HÀNH GAME
 // ==========================================
 function loadLevel(levelIndex) {
     if (levelIndex >= 5) return window.showLeaderboard();
@@ -66,7 +90,6 @@ function loadLevel(levelIndex) {
     document.getElementById("level-text").innerText = levelIndex + 1;
     document.getElementById("puzzle-bg").style.backgroundImage = `url('${levelData.image}')`;
     
-    // Đảo ngẫu nhiên 4 câu hỏi của Level này (Mỗi máy một thứ tự khác nhau)
     currentLevelQuestions = shuffleArray(levelData.questions);
     
     attemptedPieces = []; 
@@ -77,40 +100,30 @@ function loadLevel(levelIndex) {
 }
 
 // ---------------------------------------------
-// XỬ LÝ CÂU HỎI TRẮC NGHIỆM MẢNH GHÉP (15 GIÂY)
-// ---------------------------------------------
 window.openQuestion = function(pieceId) {
     if (attemptedPieces.includes(pieceId)) return;
 
-    // Lấy câu hỏi từ mảng đã được xáo trộn thay vì mảng gốc
     const qData = currentLevelQuestions[pieceId - 1];
     document.getElementById("q-text").innerText = qData.q;
     
     const ansContainer = document.getElementById("answers-container");
     ansContainer.innerHTML = "";
     
-    // XỬ LÝ ĐẢO ĐÁP ÁN: Gắn cờ (isCorrect) để biết đáp án nào là đúng trước khi đảo
     let optionsWithState = qData.options.map((opt, index) => {
-        return { 
-            text: opt, 
-            isCorrect: (index === qData.correct) 
-        };
+        return { text: opt, isCorrect: (index === qData.correct) };
     });
     
-    // Đảo ngẫu nhiên vị trí các đáp án
     optionsWithState = shuffleArray(optionsWithState);
     
-    // Hiển thị đáp án ra màn hình
     optionsWithState.forEach((optObj) => {
         const btn = document.createElement("button");
         btn.innerText = optObj.text;
-        btn.onclick = () => checkAnswer(optObj.isCorrect, pieceId); // Truyền thẳng trạng thái Đúng/Sai
+        btn.onclick = () => checkAnswer(optObj.isCorrect, pieceId); 
         ansContainer.appendChild(btn);
     });
 
     document.getElementById("question-modal").classList.remove("hidden");
     
-    // Khởi động đồng hồ 15 giây
     clearInterval(countdownInterval);
     let timeLeft = 15;
     document.getElementById("q-timer").innerText = timeLeft;
@@ -126,9 +139,8 @@ window.openQuestion = function(pieceId) {
     }, 1000);
 };
 
-// Hàm xử lý khi HẾT 15 GIÂY trả lời mảnh ghép
 function handleTimeoutPiece(pieceId) {
-    alert("HẾT GIỜ! Bạn đã quá thời gian 15 giây. Mảnh ghép này sẽ bị khóa.");
+    showNotification("⏳ HẾT GIỜ! Mảnh ghép này đã bị khóa.", "warning");
     player.time += 15;
     attemptedPieces.push(pieceId); 
 
@@ -144,7 +156,6 @@ function handleTimeoutPiece(pieceId) {
     }
 }
 
-// Hàm xử lý khi CÓ TRẢ LỜI (Dù đúng hay sai)
 function checkAnswer(isCorrect, pieceId) {
     clearInterval(countdownInterval); 
     const timeTaken = (Date.now() - questionStartTime) / 1000;
@@ -153,13 +164,12 @@ function checkAnswer(isCorrect, pieceId) {
     attemptedPieces.push(pieceId); 
     const pieceElement = document.getElementById(`p${pieceId}`);
 
-    // Kiểm tra trực tiếp biến isCorrect thay vì so sánh index như trước
     if (isCorrect) {
-        alert("Chính xác! Bạn nhận được 10 điểm.");
+        showNotification("🎉 Chính xác! Bạn nhận được 10 điểm.", "success");
         player.score += 10;
         pieceElement.classList.add("hidden"); 
     } else {
-        alert("Sai rồi! Rất tiếc, mảnh ghép này sẽ bị khóa lại và đáp án được giữ bí mật.");
+        showNotification("❌ Sai rồi! Đáp án được giữ bí mật.", "error");
         pieceElement.classList.add("disabled-piece"); 
     }
 
@@ -172,8 +182,6 @@ function checkAnswer(isCorrect, pieceId) {
     }
 }
 
-// ---------------------------------------------
-// XỬ LÝ CÂU HỎI ĐOÁN HÌNH ẢNH CHUNG CUỘC (30 GIÂY)
 // ---------------------------------------------
 function guessImageQuestion() {
     const miniWrapper = document.getElementById("mini-puzzle-wrapper"); 
@@ -213,7 +221,7 @@ function guessImageQuestion() {
 }
 
 function handleTimeoutGuess() {
-    alert("HẾT GIỜ! Bạn đã mất cơ hội trả lời câu hỏi quyết định.");
+    showNotification("⏳ HẾT GIỜ! Bạn đã mất cơ hội trả lời.", "warning");
     player.time += 30;
     
     document.getElementById("guess-modal").classList.add("hidden");
@@ -231,10 +239,10 @@ window.submitGuess = function() {
     player.time += timeTaken;
 
     if(answer && answer.trim().toLowerCase() === gameData[currentLevel].imageAnswer.toLowerCase()) {
-        alert("Tuyệt vời! Bạn nhận thêm 20 điểm.");
+        showNotification("🏆 Tuyệt vời! Bạn nhận thêm 20 điểm.", "success");
         player.score += 20;
     } else {
-        alert("Rất tiếc! Câu trả lời của bạn chưa chính xác. Đáp án sẽ được giữ bí mật để đảm bảo tính công bằng!");
+        showNotification("❌ Rất tiếc! Câu trả lời chưa chính xác.", "error");
     }
     
     document.getElementById("guess-modal").classList.add("hidden");
@@ -245,8 +253,6 @@ window.submitGuess = function() {
     loadLevel(currentLevel);
 };
 
-// ---------------------------------------------
-// GIAO DIỆN VÀ BẢNG XẾP HẠNG
 // ---------------------------------------------
 function updateUI() {
     document.getElementById("score-display").innerText = player.score;
@@ -289,18 +295,4 @@ window.showLeaderboard = function() {
                 </li>`;
         });
     });
-};
-
-window.resetGameData = function() {
-    const confirmReset = confirm("CẢNH BÁO: Bạn có chắc chắn muốn XÓA TOÀN BỘ dữ liệu người chơi và Bảng xếp hạng không?");
-    if (confirmReset) {
-        set(ref(db, 'players'), null)
-            .then(() => {
-                alert("Đã reset dữ liệu thành công! Hãy tải lại (F5) trang web để bắt đầu lượt mới.");
-                location.reload(); 
-            })
-            .catch((error) => {
-                alert("Lỗi khi reset: " + error);
-            });
-    }
 };

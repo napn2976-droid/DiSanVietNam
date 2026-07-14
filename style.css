@@ -230,3 +230,31 @@ body {
     /* Ẩn bớt hoa sen và mây trên điện thoại để đỡ rối mắt */
     .lotus-left, .lotus-right { width: 300px; bottom: -40px; }
 }
+/* =========================================
+   THÔNG BÁO NỔI TỰ ĐỘNG (TOAST NOTIFICATION)
+   ========================================= */
+.toast-notification {
+    position: fixed;
+    top: -50px; /* Bắt đầu ở trạng thái ẩn phía trên màn hình */
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: white;
+    z-index: 99999;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.4s ease, top 0.4s ease;
+    text-align: center;
+    width: 80%;
+    max-width: 400px;
+    pointer-events: none; /* Xuyên qua click, không chặn người chơi thao tác */
+}
+
+/* Các màu sắc trạng thái */
+.toast-success { background-color: #28a745; border: 2px solid white; }
+.toast-error { background-color: #dc3545; border: 2px solid white; }
+.toast-warning { background-color: #ffc107; color: #333; border: 2px solid white; }
