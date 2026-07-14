@@ -16,15 +16,12 @@ let currentLevel = 0;
 let attemptedPieces = []; 
 let countdownInterval; 
 let currentLevelQuestions = [];
-
 let isGameLocked = false; 
 
-// ==========================================
-// CÁC BIẾN MỚI ĐỂ TÍNH TỔNG THỜI GIAN TRẢI NGHIỆM
-// ==========================================
 let globalStartTime = 0;
 let isGameFinished = false;
 let mainTimerInterval;
+let syncTimerInterval; // Bộ đồng bộ dữ liệu lên máy chủ
 
 function showNotification(msg, type) {
     const toast = document.createElement("div");
@@ -48,7 +45,7 @@ function shuffleArray(array) {
 }
 
 // ==========================================
-// LOGIC CHỜ HOST & KHÓA PHÒNG
+// LOGIC CHỜ HOST & KHÓA PHÒNG & ĐỒNG BỘ THỜI GIAN
 // ==========================================
 onValue(ref(db, 'gameStarted'), (snapshot) => {
     isGameLocked = snapshot.val() === true; 
@@ -57,13 +54,11 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
         const waitScreen = document.getElementById("wait-screen");
         if (waitScreen) waitScreen.style.display = "none";
         
-        // KHI NGƯỜI CHƠI ĐÃ VÀO PHÒNG VÀ HOST BẤM BẮT ĐẦU
         if (player.name !== "" && globalStartTime === 0) {
             
-            // 1. Chốt mốc thời gian bắt đầu
             globalStartTime = Date.now();
             
-            // 2. Chạy đồng hồ ngầm, cập nhật lên màn hình người chơi mỗi 0.1 giây
+            // 1. Chạy đồng hồ hiển thị trên điện thoại người chơi (nhảy mỗi 0.1s cho mượt)
             mainTimerInterval = setInterval(() => {
                 if (!isGameFinished) {
                     player.time = (Date.now() - globalStartTime) / 1000;
@@ -71,7 +66,13 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
                 }
             }, 100);
 
-            // 3. Khởi động màn 1
+            // 2. TÍNH NĂNG MỚI: Báo cáo thời gian về Máy chủ (nhảy mỗi 1s để Host thấy)
+            syncTimerInterval = setInterval(() => {
+                if (!isGameFinished) {
+                    update(ref(db, 'players/' + player.id), { time: player.time });
+                }
+            }, 1000);
+
             loadLevel(currentLevel);
         }
     }
@@ -101,12 +102,12 @@ window.startGame = function() {
 // LOGIC VẬN HÀNH GAME
 // ==========================================
 function loadLevel(levelIndex) {
-    // Nếu vượt qua Level 5 -> Kết thúc trò chơi
     if (levelIndex >= 5) {
-        isGameFinished = true; // Dừng đồng hồ ngầm
+        isGameFinished = true; 
         clearInterval(mainTimerInterval);
+        clearInterval(syncTimerInterval); // Dừng đồng bộ khi game kết thúc
         player.time = (Date.now() - globalStartTime) / 1000;
-        update(ref(db, 'players/' + player.id), player); // Gửi tổng thời gian cuối cùng lên máy chủ
+        update(ref(db, 'players/' + player.id), player); 
         return window.showLeaderboard();
     }
 
@@ -166,12 +167,7 @@ function handleTimeoutPiece(pieceId) {
 
     const pieceElement = document.getElementById(`p${pieceId}`);
     pieceElement.classList.add("disabled-piece"); 
-    
     document.getElementById("question-modal").classList.add("hidden");
-    
-    // Ghi nhận tổng thời gian lên máy chủ
-    player.time = (Date.now() - globalStartTime) / 1000;
-    update(ref(db, 'players/' + player.id), player);
     updateUI();
 
     if(attemptedPieces.length === 4) {
@@ -196,8 +192,6 @@ function checkAnswer(isCorrect, pieceId) {
 
     document.getElementById("question-modal").classList.add("hidden");
     
-    // Ghi nhận tổng thời gian lên máy chủ
-    player.time = (Date.now() - globalStartTime) / 1000;
     update(ref(db, 'players/' + player.id), player);
     updateUI();
 
@@ -244,13 +238,10 @@ function guessImageQuestion() {
 
 function handleTimeoutGuess() {
     showNotification("⏳ HẾT GIỜ! Bạn đã mất cơ hội trả lời.", "warning");
-    
     document.getElementById("guess-modal").classList.add("hidden");
     
-    player.time = (Date.now() - globalStartTime) / 1000;
     update(ref(db, 'players/' + player.id), player);
     updateUI();
-    
     currentLevel++;
     loadLevel(currentLevel);
 }
@@ -268,10 +259,8 @@ window.submitGuess = function() {
     
     document.getElementById("guess-modal").classList.add("hidden");
     
-    player.time = (Date.now() - globalStartTime) / 1000;
     update(ref(db, 'players/' + player.id), player);
     updateUI();
-    
     currentLevel++;
     loadLevel(currentLevel);
 };
