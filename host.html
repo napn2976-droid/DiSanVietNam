@@ -2,42 +2,20 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Màn Hình Máy Chủ - Di Sản Việt Nam</title>
+    <title>Màn Hình Máy Chủ</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Mulish:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body style="justify-content: flex-start; padding-top: 50px;">
+<body style="justify-content: flex-start; padding-top: 20px;">
+
+    <button onclick="window.resetGameData()" style="position: absolute; top: 20px; left: 20px; padding: 10px; background: var(--red); color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 RESET</button>
     
-    <!-- Trang trí SVG -->
-    <img src="assets/images/cloud.svg" class="deco cloud-left" alt="cloud">
-    <img src="assets/images/cloud.svg" class="deco cloud-right" alt="cloud">
-    
-    <div class="header">
-        <h3 class="subtitle">BẢNG XẾP HẠNG TRỰC TIẾP</h3>
-        <h1 class="title">DI SẢN VĂN HÓA VIỆT NAM</h1>
+    <div style="text-align: center; margin-top: 50px;">
+        <h1 style="color: var(--gold);">SỐ LƯỢNG NGƯỜI CHƠI: <span id="count-display" style="color: white;">0</span></h1>
+        <button id="start-btn" onclick="window.startGlobalGame()" style="padding: 20px 40px; font-size: 2rem; background: green; color: white; border: none; border-radius: 10px; cursor: pointer;">▶ BẮT ĐẦU TRÒ CHƠI</button>
     </div>
 
-    <!-- Khung hiển thị tiến trình và kết quả -->
-    <div style="background: rgba(253, 246, 227, 0.95); width: 85%; max-width: 1000px; margin: 20px auto; border: 5px solid var(--gold); border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left;">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--red); padding-bottom: 10px; margin-bottom: 20px;">
-            <h2 style="font-family: var(--font-title); color: var(--red); font-size: 2.5rem; margin: 0;">🏆 TOP NGƯỜI CHƠI XUẤT SẮC</h2>
-            <div style="font-size: 1.5rem; color: #555; font-weight: bold;">
-                Trạng thái: <span style="color: green;">🟢 Đang cập nhật </span>
-            </div>
-        </div>
+    <ul id="live-leaderboard" style="width: 80%; margin: 20px auto; list-style: none; padding: 0;"></ul>
 
-        <!-- Danh sách xếp hạng sẽ được Javascript đổ vào đây -->
-        <ul id="live-leaderboard" style="font-size: 1.8rem; list-style: none; padding: 0; margin: 0; max-height: 500px; overflow-y: auto;">
-            <li style="text-align: center; color: #888;">Đang chờ người chơi tham gia...</li>
-        </ul>
-
-    </div>
-<!-- THÊM MỚI: Nút Reset Dữ liệu dành riêng cho Host -->
-    <!-- Nút Reset Dữ liệu dành riêng cho Host -->
-    <button onclick="window.resetGameData()" style="position: absolute; top: 20px; left: 20px; padding: 10px 20px; background: var(--red); color: white; border: 2px solid var(--gold); font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: var(--font-body); box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; z-index: 9999;">
-        🔄 LÀM MỚI BẢNG XẾP HẠNG
-    </button>
     <script type="module" src="host.js"></script>
 </body>
 </html>
