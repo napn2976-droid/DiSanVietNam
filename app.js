@@ -2,9 +2,6 @@ import { gameData } from './questions.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// ==========================================
-// 1. CẤU HÌNH FIREBASE THẬT
-// ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyCi3OtCHi58OcgbAP6vclqJWy-sEGWfYDI",
     authDomain: "disanvietnam-9e9ab.firebaseapp.com",
@@ -14,22 +11,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let player = {
-    id: "player_" + Math.floor(Math.random() * 100000),
-    name: "",
-    score: 0,
-    time: 0
-};
-
+let player = { id: "player_" + Math.floor(Math.random() * 100000), name: "", score: 0, time: 0 };
 let currentLevel = 0; 
 let questionStartTime = 0;
 let attemptedPieces = []; 
 let countdownInterval; 
 let currentLevelQuestions = [];
 
-// ==========================================
-// HÀM TẠO THÔNG BÁO NỔI
-// ==========================================
+let isGameLocked = false; // "Lính canh" kiểm tra trạng thái khóa phòng
+
 function showNotification(msg, type) {
     const toast = document.createElement("div");
     toast.className = `toast-notification toast-${type}`;
@@ -52,9 +42,30 @@ function shuffleArray(array) {
 }
 
 // ==========================================
-// LOGIC CHỜ HOST & VÀO GAME
+// LOGIC CHỜ HOST & KHÓA PHÒNG
 // ==========================================
+onValue(ref(db, 'gameStarted'), (snapshot) => {
+    isGameLocked = snapshot.val() === true; // Cập nhật trạng thái khóa phòng liên tục
+    
+    if (isGameLocked) {
+        const waitScreen = document.getElementById("wait-screen");
+        if (waitScreen) waitScreen.style.display = "none";
+        
+        // Chỉ cho phép những người ĐÃ CÓ TÊN (đã vào phòng trước đó) được load game
+        if (player.name !== "") {
+            loadLevel(currentLevel);
+        }
+    }
+});
+
 window.startGame = function() {
+    // 1. Kiểm tra xem phòng đã khóa chưa
+    if (isGameLocked) {
+        showNotification("⛔ Trò chơi đã bắt đầu! Bạn không thể tham gia nữa.", "error");
+        return; 
+    }
+
+    // 2. Nếu chưa khóa thì mới cho nhập tên
     const nameInput = document.getElementById("player-name-input").value.trim();
     if (!nameInput) {
         showNotification("⚠️ Vui lòng nhập tên của bạn!", "warning");
@@ -65,28 +76,12 @@ window.startGame = function() {
     document.getElementById("player-name").innerText = player.name;
     document.getElementById("start-screen").classList.add("hidden");
     
-    // Hiện màn hình chờ
     document.getElementById("wait-screen").style.display = "flex";
-    
-    // Đẩy dữ liệu lên Firebase
     set(ref(db, 'players/' + player.id), player);
 };
 
-// Lắng nghe Host bấm Bắt đầu
-onValue(ref(db, 'gameStarted'), (snapshot) => {
-    if (snapshot.val() === true) {
-        const waitScreen = document.getElementById("wait-screen");
-        if (waitScreen) waitScreen.style.display = "none";
-        
-        // Chỉ load level nếu người chơi đã đăng nhập (có player.name)
-        if (player.name !== "") {
-            loadLevel(currentLevel);
-        }
-    }
-});
-
 // ==========================================
-// LOGIC VẬN HÀNH GAME
+// LOGIC VẬN HÀNH GAME (GIỮ NGUYÊN)
 // ==========================================
 function loadLevel(levelIndex) {
     if (levelIndex >= 5) return window.showLeaderboard();
