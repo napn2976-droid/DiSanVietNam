@@ -13,7 +13,7 @@ export const gameData = [
     {
         level: 2,
         image: "assets/images/level2-vanmieu.png",
-        imageAnswer: "Văn Miếu", 
+        imageAnswer: "Văn Miếu-Quốc Tử Giám", 
         questions: [
             { id: 1, q: "Di tích nào đã sử dụng công nghệ 3D Mapping cho trải nghiệm đêm?", options: ["Hoàng thành", "Cố đô Huế", "Văn Miếu", "Đền Hùng"], correct: 2 },
             { id: 2, q: "Ánh sáng và âm thanh tại đây kể câu chuyện gì?", options: ["Đánh giặc", "Nông nghiệp", "Giáo dục, khoa cử", "Thương mại"], correct: 2 },
