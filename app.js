@@ -13,12 +13,18 @@ const db = getDatabase(app);
 
 let player = { id: "player_" + Math.floor(Math.random() * 100000), name: "", score: 0, time: 0 };
 let currentLevel = 0; 
-let questionStartTime = 0;
 let attemptedPieces = []; 
 let countdownInterval; 
 let currentLevelQuestions = [];
 
-let isGameLocked = false; // "Lính canh" kiểm tra trạng thái khóa phòng
+let isGameLocked = false; 
+
+// ==========================================
+// CÁC BIẾN MỚI ĐỂ TÍNH TỔNG THỜI GIAN TRẢI NGHIỆM
+// ==========================================
+let globalStartTime = 0;
+let isGameFinished = false;
+let mainTimerInterval;
 
 function showNotification(msg, type) {
     const toast = document.createElement("div");
@@ -45,27 +51,38 @@ function shuffleArray(array) {
 // LOGIC CHỜ HOST & KHÓA PHÒNG
 // ==========================================
 onValue(ref(db, 'gameStarted'), (snapshot) => {
-    isGameLocked = snapshot.val() === true; // Cập nhật trạng thái khóa phòng liên tục
+    isGameLocked = snapshot.val() === true; 
     
     if (isGameLocked) {
         const waitScreen = document.getElementById("wait-screen");
         if (waitScreen) waitScreen.style.display = "none";
         
-        // Chỉ cho phép những người ĐÃ CÓ TÊN (đã vào phòng trước đó) được load game
-        if (player.name !== "") {
+        // KHI NGƯỜI CHƠI ĐÃ VÀO PHÒNG VÀ HOST BẤM BẮT ĐẦU
+        if (player.name !== "" && globalStartTime === 0) {
+            
+            // 1. Chốt mốc thời gian bắt đầu
+            globalStartTime = Date.now();
+            
+            // 2. Chạy đồng hồ ngầm, cập nhật lên màn hình người chơi mỗi 0.1 giây
+            mainTimerInterval = setInterval(() => {
+                if (!isGameFinished) {
+                    player.time = (Date.now() - globalStartTime) / 1000;
+                    document.getElementById("time-display").innerText = player.time.toFixed(1);
+                }
+            }, 100);
+
+            // 3. Khởi động màn 1
             loadLevel(currentLevel);
         }
     }
 });
 
 window.startGame = function() {
-    // 1. Kiểm tra xem phòng đã khóa chưa
     if (isGameLocked) {
         showNotification("⛔ Trò chơi đã bắt đầu! Bạn không thể tham gia nữa.", "error");
         return; 
     }
 
-    // 2. Nếu chưa khóa thì mới cho nhập tên
     const nameInput = document.getElementById("player-name-input").value.trim();
     if (!nameInput) {
         showNotification("⚠️ Vui lòng nhập tên của bạn!", "warning");
@@ -81,10 +98,17 @@ window.startGame = function() {
 };
 
 // ==========================================
-// LOGIC VẬN HÀNH GAME (GIỮ NGUYÊN)
+// LOGIC VẬN HÀNH GAME
 // ==========================================
 function loadLevel(levelIndex) {
-    if (levelIndex >= 5) return window.showLeaderboard();
+    // Nếu vượt qua Level 5 -> Kết thúc trò chơi
+    if (levelIndex >= 5) {
+        isGameFinished = true; // Dừng đồng hồ ngầm
+        clearInterval(mainTimerInterval);
+        player.time = (Date.now() - globalStartTime) / 1000;
+        update(ref(db, 'players/' + player.id), player); // Gửi tổng thời gian cuối cùng lên máy chủ
+        return window.showLeaderboard();
+    }
 
     const levelData = gameData[levelIndex];
     document.getElementById("level-text").innerText = levelIndex + 1;
@@ -125,7 +149,6 @@ window.openQuestion = function(pieceId) {
     clearInterval(countdownInterval);
     let timeLeft = 15;
     document.getElementById("q-timer").innerText = timeLeft;
-    questionStartTime = Date.now();
 
     countdownInterval = setInterval(() => {
         timeLeft--;
@@ -139,15 +162,17 @@ window.openQuestion = function(pieceId) {
 
 function handleTimeoutPiece(pieceId) {
     showNotification("⏳ HẾT GIỜ! Mảnh ghép này đã bị khóa.", "warning");
-    player.time += 15;
     attemptedPieces.push(pieceId); 
 
     const pieceElement = document.getElementById(`p${pieceId}`);
     pieceElement.classList.add("disabled-piece"); 
     
     document.getElementById("question-modal").classList.add("hidden");
-    updateUI();
+    
+    // Ghi nhận tổng thời gian lên máy chủ
+    player.time = (Date.now() - globalStartTime) / 1000;
     update(ref(db, 'players/' + player.id), player);
+    updateUI();
 
     if(attemptedPieces.length === 4) {
         setTimeout(guessImageQuestion, 1200); 
@@ -156,8 +181,6 @@ function handleTimeoutPiece(pieceId) {
 
 function checkAnswer(isCorrect, pieceId) {
     clearInterval(countdownInterval); 
-    const timeTaken = (Date.now() - questionStartTime) / 1000;
-    player.time += timeTaken;
     
     attemptedPieces.push(pieceId); 
     const pieceElement = document.getElementById(`p${pieceId}`);
@@ -172,8 +195,11 @@ function checkAnswer(isCorrect, pieceId) {
     }
 
     document.getElementById("question-modal").classList.add("hidden");
-    updateUI();
+    
+    // Ghi nhận tổng thời gian lên máy chủ
+    player.time = (Date.now() - globalStartTime) / 1000;
     update(ref(db, 'players/' + player.id), player);
+    updateUI();
 
     if(attemptedPieces.length === 4) {
         setTimeout(guessImageQuestion, 1200); 
@@ -205,7 +231,6 @@ function guessImageQuestion() {
     clearInterval(countdownInterval);
     let timeLeft = 30;
     document.getElementById("guess-timer").innerText = timeLeft;
-    questionStartTime = Date.now(); 
 
     countdownInterval = setInterval(() => {
         timeLeft--;
@@ -219,9 +244,10 @@ function guessImageQuestion() {
 
 function handleTimeoutGuess() {
     showNotification("⏳ HẾT GIỜ! Bạn đã mất cơ hội trả lời.", "warning");
-    player.time += 30;
     
     document.getElementById("guess-modal").classList.add("hidden");
+    
+    player.time = (Date.now() - globalStartTime) / 1000;
     update(ref(db, 'players/' + player.id), player);
     updateUI();
     
@@ -232,8 +258,6 @@ function handleTimeoutGuess() {
 window.submitGuess = function() {
     clearInterval(countdownInterval);
     const answer = document.getElementById("guess-input").value;
-    const timeTaken = (Date.now() - questionStartTime) / 1000;
-    player.time += timeTaken;
 
     if(answer && answer.trim().toLowerCase() === gameData[currentLevel].imageAnswer.toLowerCase()) {
         showNotification("🏆 Tuyệt vời! Bạn nhận thêm 20 điểm.", "success");
@@ -243,6 +267,8 @@ window.submitGuess = function() {
     }
     
     document.getElementById("guess-modal").classList.add("hidden");
+    
+    player.time = (Date.now() - globalStartTime) / 1000;
     update(ref(db, 'players/' + player.id), player);
     updateUI();
     
@@ -252,7 +278,6 @@ window.submitGuess = function() {
 
 function updateUI() {
     document.getElementById("score-display").innerText = player.score;
-    document.getElementById("time-display").innerText = player.time.toFixed(1);
 }
 
 window.showLeaderboard = function() {
