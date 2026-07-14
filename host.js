@@ -32,16 +32,17 @@ onValue(ref(db, 'players'), (snapshot) => {
     }).join("");
 });
 
-// THÊM ALERT ĐỂ BIẾT NÚT ĐÃ ĐƯỢC ẤN THÀNH CÔNG
+// NÚT BẮT ĐẦU: Ghi lại chính xác mốc thời gian của Host
 window.startGlobalGame = () => {
-    update(ref(db), { gameStarted: true })
-        .then(() => alert("✅ Đã phát lệnh BẮT ĐẦU! Màn hình của tất cả người chơi đang được mở khóa."))
+    update(ref(db), { gameStarted: true, startTime: Date.now() })
+        .then(() => alert("✅ Đã phát lệnh BẮT ĐẦU! Màn hình người chơi đã mở và đồng hồ đang chạy."))
         .catch((error) => alert("❌ Lỗi mạng: " + error));
 };
 
+// NÚT RESET: Xóa luôn mốc thời gian cũ để tránh lỗi ván sau
 window.resetGameData = () => {
     if (confirm("CẢNH BÁO: Xóa sạch toàn bộ dữ liệu người chơi và MỞ LẠI PHÒNG?")) {
-        set(ref(db), { players: null, gameStarted: false })
+        set(ref(db), { players: null, gameStarted: false, startTime: null })
             .then(() => alert("✅ Đã làm mới phòng! Người chơi mới có thể tham gia ngay bây giờ."))
             .catch((error) => alert("❌ Lỗi mạng: " + error));
     }

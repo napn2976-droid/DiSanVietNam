@@ -18,7 +18,8 @@ let countdownInterval;
 let currentLevelQuestions = [];
 let isGameLocked = false; 
 
-let globalStartTime = 0;
+// SỬ DỤNG MỐC THỜI GIAN CHUẨN TỪ MÁY CHỦ (HOST)
+let hostStartTime = 0;
 let isGameFinished = false;
 let mainTimerInterval;
 let syncTimerInterval; 
@@ -44,6 +45,12 @@ function shuffleArray(array) {
     return newArray;
 }
 
+// 1. Lắng nghe mốc thời gian chuẩn do Host phát ra
+onValue(ref(db, 'startTime'), (snapshot) => {
+    hostStartTime = snapshot.val() || 0;
+});
+
+// 2. Mở khóa màn hình và bắt đầu chạy đồng hồ
 onValue(ref(db, 'gameStarted'), (snapshot) => {
     isGameLocked = snapshot.val() === true; 
     
@@ -51,18 +58,19 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
         const waitScreen = document.getElementById("wait-screen");
         if (waitScreen) waitScreen.style.display = "none";
         
-        if (player.name !== "" && globalStartTime === 0) {
-            globalStartTime = Date.now();
+        // Chỉ chạy khi người chơi đã có tên và đồng hồ chưa được bật
+        if (player.name !== "" && !mainTimerInterval) {
             
             mainTimerInterval = setInterval(() => {
-                if (!isGameFinished) {
-                    player.time = (Date.now() - globalStartTime) / 1000;
+                // Đối chiếu liên tục với hostStartTime để ra tổng thời gian
+                if (!isGameFinished && hostStartTime > 0) {
+                    player.time = (Date.now() - hostStartTime) / 1000;
                     document.getElementById("time-display").innerText = player.time.toFixed(1);
                 }
             }, 100);
 
             syncTimerInterval = setInterval(() => {
-                if (!isGameFinished) {
+                if (!isGameFinished && hostStartTime > 0) {
                     update(ref(db, 'players/' + player.id), { time: player.time });
                 }
             }, 1000);
@@ -72,10 +80,8 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
     }
 });
 
-// HÀM START GAME ĐÃ ĐƯỢC NÂNG CẤP ĐỂ HIỂN THỊ MÀN HÌNH CHỜ CHUẨN
 window.startGame = function() {
     if (isGameLocked) {
-        // Dùng alert để chắn chắn người chơi nhìn thấy thông báo nếu bị khóa
         alert("⛔ Trò chơi đã bắt đầu từ trước! Bạn hãy yêu cầu Máy chủ (Host) ấn nút 🔄 LÀM MỚI DỮ LIỆU để mở lại phòng nhé.");
         return; 
     }
@@ -89,7 +95,6 @@ window.startGame = function() {
     player.name = nameInput;
     document.getElementById("player-name").innerText = player.name;
     
-    // Ép ẩn màn hình nhập và ép hiện màn hình chờ
     document.getElementById("start-screen").style.display = "none";
     document.getElementById("wait-screen").style.display = "flex";
     
@@ -101,7 +106,7 @@ function loadLevel(levelIndex) {
         isGameFinished = true; 
         clearInterval(mainTimerInterval);
         clearInterval(syncTimerInterval);
-        player.time = (Date.now() - globalStartTime) / 1000;
+        if(hostStartTime > 0) player.time = (Date.now() - hostStartTime) / 1000;
         update(ref(db, 'players/' + player.id), player); 
         return window.showLeaderboard();
     }
