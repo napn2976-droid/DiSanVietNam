@@ -36,23 +36,24 @@ onValue(ref(db, 'players'), (snapshot) => {
     const listEl = document.getElementById("live-leaderboard");
     listEl.innerHTML = players.map((p, i) => {
         let trophy = i === 0 ? "🥇" : (i === 1 ? "🥈" : (i === 2 ? "🥉" : ""));
+        
+        // CSS MỚI: Thêm flex-shrink: 0 để chốt cứng chiều rộng cột, chống rớt dòng huy chương tuyệt đối
         return `<li style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0; border-bottom: 1px dashed var(--gold); padding: 15px; background-color: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <div style="font-family: var(--font-title); font-size: 1.8rem; color: var(--red); width: 150px; text-align: left; white-space: nowrap;"><strong>TOP ${i+1} ${trophy}</strong></div>
-            <div style="flex: 1; text-align: left; font-weight: bold; font-size: 1.5rem; color: #333; padding-left: 20px;">${p.name}</div>
-            <div style="text-align: right; color: #b8860b; font-size: 1.5rem; font-weight: bold; width: 150px; white-space: nowrap;">${p.score} <span style="font-size: 1rem; color: #333; font-weight: normal;">điểm</span></div>
-            <div style="text-align: right; color: #555; font-size: 1.2rem; width: 120px; white-space: nowrap;">⏱ ${p.time.toFixed(1)}s</div>
+            <div style="font-family: var(--font-title); font-size: 1.8rem; color: var(--red); width: 160px; text-align: left; white-space: nowrap; flex-shrink: 0;"><strong>TOP ${i+1} ${trophy}</strong></div>
+            <div style="flex: 1; text-align: left; font-weight: bold; font-size: 1.5rem; color: #333; padding-left: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+            <div style="text-align: right; color: #b8860b; font-size: 1.5rem; font-weight: bold; width: 150px; white-space: nowrap; flex-shrink: 0;">${p.score} <span style="font-size: 1rem; color: #333; font-weight: normal;">điểm</span></div>
+            <div style="text-align: right; color: #555; font-size: 1.2rem; width: 120px; white-space: nowrap; flex-shrink: 0;">⏱ ${p.time.toFixed(1)}s</div>
         </li>`;
     }).join("");
 });
 
 window.startGlobalGame = () => {
-    update(ref(db), { gameStarted: true }) // Không truyền startTime lên nữa
+    update(ref(db), { gameStarted: true }) 
         .then(() => showNotification("✅ Đã phát lệnh BẮT ĐẦU!", "success"))
         .catch((error) => showNotification("❌ Lỗi mạng: " + error, "error"));
 };
 
 window.resetGameData = () => {
-    // Chạy thẳng lệnh xóa phòng mà không cần hỏi lại
     set(ref(db), { players: null, gameStarted: false })
         .then(() => showNotification("✅ Đã làm mới phòng chờ!", "success"))
         .catch((error) => showNotification("❌ Lỗi mạng: " + error, "error"));

@@ -18,7 +18,6 @@ let countdownInterval;
 let currentLevelQuestions = [];
 let isGameLocked = false; 
 
-// Đồng hồ nội bộ của mỗi thiết bị
 let globalStartTime = 0;
 let isGameFinished = false;
 let mainTimerInterval;
@@ -45,7 +44,6 @@ function shuffleArray(array) {
     return newArray;
 }
 
-// NGAY KHI CÓ LỆNH BẮT ĐẦU, MÁY SẼ TỰ KÍCH HOẠT ĐỒNG HỒ CỦA NÓ
 onValue(ref(db, 'gameStarted'), (snapshot) => {
     isGameLocked = snapshot.val() === true; 
     
@@ -55,7 +53,7 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
         
         if (player.name !== "" && globalStartTime === 0) {
             
-            globalStartTime = Date.now(); // Chốt mốc 0.0s chuẩn trên máy người chơi
+            globalStartTime = Date.now(); // Chốt mốc 0.0s chuẩn trên máy nội bộ
             
             mainTimerInterval = setInterval(() => {
                 if (!isGameFinished) {
@@ -64,11 +62,12 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
                 }
             }, 100);
 
+            // ĐÃ NÂNG CẤP TỐC ĐỘ BÁO CÁO LÊN 100ms (10 lần/giây) ĐỂ MÁY CHỦ HIỆN TÍP TẮC
             syncTimerInterval = setInterval(() => {
                 if (!isGameFinished) {
                     update(ref(db, 'players/' + player.id), { time: player.time });
                 }
-            }, 1000);
+            }, 100);
 
             loadLevel(currentLevel);
         }
