@@ -18,8 +18,8 @@ let countdownInterval;
 let currentLevelQuestions = [];
 let isGameLocked = false; 
 
-// SỬ DỤNG MỐC THỜI GIAN CHUẨN TỪ MÁY CHỦ (HOST)
-let hostStartTime = 0;
+// Đồng hồ nội bộ của mỗi thiết bị
+let globalStartTime = 0;
 let isGameFinished = false;
 let mainTimerInterval;
 let syncTimerInterval; 
@@ -45,12 +45,7 @@ function shuffleArray(array) {
     return newArray;
 }
 
-// 1. Lắng nghe mốc thời gian chuẩn do Host phát ra
-onValue(ref(db, 'startTime'), (snapshot) => {
-    hostStartTime = snapshot.val() || 0;
-});
-
-// 2. Mở khóa màn hình và bắt đầu chạy đồng hồ
+// NGAY KHI CÓ LỆNH BẮT ĐẦU, MÁY SẼ TỰ KÍCH HOẠT ĐỒNG HỒ CỦA NÓ
 onValue(ref(db, 'gameStarted'), (snapshot) => {
     isGameLocked = snapshot.val() === true; 
     
@@ -58,19 +53,19 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
         const waitScreen = document.getElementById("wait-screen");
         if (waitScreen) waitScreen.style.display = "none";
         
-        // Chỉ chạy khi người chơi đã có tên và đồng hồ chưa được bật
-        if (player.name !== "" && !mainTimerInterval) {
+        if (player.name !== "" && globalStartTime === 0) {
+            
+            globalStartTime = Date.now(); // Chốt mốc 0.0s chuẩn trên máy người chơi
             
             mainTimerInterval = setInterval(() => {
-                // Đối chiếu liên tục với hostStartTime để ra tổng thời gian
-                if (!isGameFinished && hostStartTime > 0) {
-                    player.time = (Date.now() - hostStartTime) / 1000;
+                if (!isGameFinished) {
+                    player.time = (Date.now() - globalStartTime) / 1000;
                     document.getElementById("time-display").innerText = player.time.toFixed(1);
                 }
             }, 100);
 
             syncTimerInterval = setInterval(() => {
-                if (!isGameFinished && hostStartTime > 0) {
+                if (!isGameFinished) {
                     update(ref(db, 'players/' + player.id), { time: player.time });
                 }
             }, 1000);
@@ -82,13 +77,13 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
 
 window.startGame = function() {
     if (isGameLocked) {
-        alert("⛔ Trò chơi đã bắt đầu từ trước! Bạn hãy yêu cầu Máy chủ (Host) ấn nút 🔄 LÀM MỚI DỮ LIỆU để mở lại phòng nhé.");
+        showNotification("⛔ Trò chơi đã bắt đầu! Bạn không thể tham gia nữa.", "error");
         return; 
     }
 
     const nameInput = document.getElementById("player-name-input").value.trim();
     if (!nameInput) {
-        alert("⚠️ Vui lòng nhập tên của bạn để tiếp tục!");
+        showNotification("⚠️ Vui lòng nhập tên của bạn!", "warning");
         return;
     }
 
@@ -106,7 +101,7 @@ function loadLevel(levelIndex) {
         isGameFinished = true; 
         clearInterval(mainTimerInterval);
         clearInterval(syncTimerInterval);
-        if(hostStartTime > 0) player.time = (Date.now() - hostStartTime) / 1000;
+        player.time = (Date.now() - globalStartTime) / 1000;
         update(ref(db, 'players/' + player.id), player); 
         return window.showLeaderboard();
     }
@@ -270,11 +265,11 @@ window.showLeaderboard = function() {
         playersArr.forEach((p, i) => {
             let trophy = i === 0 ? "🥇" : (i === 1 ? "🥈" : (i === 2 ? "🥉" : ""));
             list.innerHTML += `
-                <li style="margin: 20px 0; border-bottom: 1px dashed var(--gold); padding-bottom: 15px;">
-                    <strong style="color: var(--red); font-family: var(--font-title); font-size: 2.2rem;">TOP ${i+1} ${trophy}</strong> 
-                    <span style="display:inline-block; width: 300px; text-align: left; margin-left: 20px; font-weight: bold;">${p.name}</span>
-                    <b style="color: #b8860b; font-size: 2rem;">Điểm: ${p.score}</b> 
-                    <span style="font-size: 1.5rem; color: #555; margin-left: 20px;">⏱ Tổng thời gian: ${p.time.toFixed(1)}s</span>
+                <li style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0; border-bottom: 1px dashed var(--gold); padding-bottom: 15px;">
+                    <div style="color: var(--red); font-family: var(--font-title); font-size: 2.2rem; width: 160px; text-align: left; white-space: nowrap;"><strong>TOP ${i+1} ${trophy}</strong></div> 
+                    <div style="flex: 1; text-align: left; margin-left: 20px; font-weight: bold;">${p.name}</div>
+                    <div style="color: #b8860b; font-size: 2rem; width: 180px; text-align: right; white-space: nowrap;"><b>Điểm: ${p.score}</b></div> 
+                    <div style="font-size: 1.5rem; color: #555; width: 250px; text-align: right; white-space: nowrap;">⏱ Tổng: ${p.time.toFixed(1)}s</div>
                 </li>`;
         });
     });
