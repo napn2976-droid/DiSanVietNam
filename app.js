@@ -96,8 +96,17 @@ window.startGame = function() {
     // CHỨC NĂNG MỚI: Tự động "bật bãi" khi bị máy chủ Đuổi (Kick) hoặc Reset phòng
     onValue(ref(db, 'players/' + player.id), (snapshot) => {
         if (!snapshot.exists() && player.name !== "") {
+            
+            // 1. RÚT PHÍCH CẮM NGAY LẬP TỨC để chặn việc tự động gửi dữ liệu "bóng ma" lên máy chủ
+            clearInterval(syncTimerInterval);
+            clearInterval(mainTimerInterval);
+            
+            // 2. Xóa trắng tên để vô hiệu hóa mọi nút bấm nộp bài (nếu họ cố tình bấm)
+            player.name = ""; 
+
+            // 3. Bật thông báo và đá văng
             alert("⚠️ Bạn đã bị Máy chủ mời ra khỏi trò chơi hoặc phòng đã được đặt lại!");
-            window.location.reload(); // Ép tải lại trang web (F5) để đẩy về màn hình chờ ban đầu
+            window.location.reload(); // Ép tải lại trang web (F5)
         }
     });
 };
