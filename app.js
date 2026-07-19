@@ -53,7 +53,7 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
         
         if (player.name !== "" && globalStartTime === 0) {
             
-            globalStartTime = Date.now(); // Chốt mốc 0.0s chuẩn trên máy nội bộ
+            globalStartTime = Date.now(); 
             
             mainTimerInterval = setInterval(() => {
                 if (!isGameFinished) {
@@ -62,7 +62,6 @@ onValue(ref(db, 'gameStarted'), (snapshot) => {
                 }
             }, 100);
 
-            // ĐÃ NÂNG CẤP TỐC ĐỘ BÁO CÁO LÊN 100ms (10 lần/giây) ĐỂ MÁY CHỦ HIỆN TÍP TẮC
             syncTimerInterval = setInterval(() => {
                 if (!isGameFinished) {
                     update(ref(db, 'players/' + player.id), { time: player.time });
@@ -93,6 +92,14 @@ window.startGame = function() {
     document.getElementById("wait-screen").style.display = "flex";
     
     set(ref(db, 'players/' + player.id), player);
+
+    // CHỨC NĂNG MỚI: Tự động "bật bãi" khi bị máy chủ Đuổi (Kick) hoặc Reset phòng
+    onValue(ref(db, 'players/' + player.id), (snapshot) => {
+        if (!snapshot.exists() && player.name !== "") {
+            alert("⚠️ Bạn đã bị Máy chủ mời ra khỏi trò chơi hoặc phòng đã được đặt lại!");
+            window.location.reload(); // Ép tải lại trang web (F5) để đẩy về màn hình chờ ban đầu
+        }
+    });
 };
 
 function loadLevel(levelIndex) {
