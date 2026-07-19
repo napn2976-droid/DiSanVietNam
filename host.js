@@ -59,12 +59,22 @@ window.kickPlayer = (playerId) => {
 
 window.startGlobalGame = () => {
     update(ref(db), { gameStarted: true }) 
-        .then(() => showNotification("✅ Đã phát lệnh BẮT ĐẦU!", "success"))
+        .then(() => {
+            showNotification("✅ Đã phát lệnh BẮT ĐẦU!", "success");
+            // TỰ ĐỘNG BẬT NHẠC KHI ẤN BẮT ĐẦU
+            const music = document.getElementById("host-music");
+            if(music) music.play().catch(e => console.log("Lỗi nhạc:", e));
+        })
         .catch((error) => showNotification("❌ Lỗi mạng: " + error, "error"));
 };
 
 window.resetGameData = () => {
-    set(ref(db), { players: null, gameStarted: false })
-        .then(() => showNotification("✅ Đã làm mới phòng chờ!", "success"))
+   set(ref(db), { players: null, gameStarted: false })
+        .then(() => {
+            showNotification("✅ Đã làm mới phòng chờ!", "success");
+            // TẮT NHẠC KHI RESET PHÒNG
+            const music = document.getElementById("host-music");
+            if(music) { music.pause(); music.currentTime = 0; }
+        })
         .catch((error) => showNotification("❌ Lỗi mạng: " + error, "error"));
 };

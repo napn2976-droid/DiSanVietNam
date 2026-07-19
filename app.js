@@ -90,7 +90,14 @@ window.startGame = function() {
     
     document.getElementById("start-screen").style.display = "none";
     document.getElementById("wait-screen").style.display = "flex";
-    
+    // Bật nhạc ngay khi người chơi vừa ấn Đăng Ký
+    const bgMusic = document.getElementById("bg-music");
+    const musicBtn = document.getElementById("music-toggle-btn");
+    if(bgMusic) {
+        bgMusic.play().then(() => {
+            if(musicBtn) musicBtn.innerText = "🔊"; // Đổi icon thành loa đang mở
+        }).catch(e => console.log("Trình duyệt chặn phát nhạc tự động", e));
+    }
     set(ref(db, 'players/' + player.id), player);
 
     // CHỨC NĂNG MỚI: Tự động "bật bãi" khi bị máy chủ Đuổi (Kick) hoặc Reset phòng
@@ -288,4 +295,18 @@ window.showLeaderboard = function() {
                 </li>`;
         });
     });
+};
+// HÀM MỚI: BẬT TẮT NHẠC CHO NGƯỜI CHƠI
+window.togglePlayerMusic = () => {
+    const music = document.getElementById("bg-music");
+    const btn = document.getElementById("music-toggle-btn");
+    if(!music) return;
+
+    if (music.paused) {
+        music.play();
+        btn.innerText = "🔊"; // Hiện loa đang phát
+    } else {
+        music.pause();
+        btn.innerText = "🔇"; // Hiện loa bị tắt chéo
+    }
 };
